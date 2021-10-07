@@ -1,0 +1,17 @@
+{
+    "prefix":"!",
+    "outfit":"CID_VIP_Athena_Commando_M_GalileoGondola_SG",
+    "emote":"",
+    "backpack":"",
+    "pickaxe":"",
+    "owner":["Your name"],
+    "status":"ステータス",
+    "blacklist":[
+        "aiueoblaster",
+        "kakikukekocannon",
+        "sasisusesorifle"
+    ],
+    "joinmessage":"参加メッセージ",
+    "privacy":"private",
+    "joinrequest":true
+}
