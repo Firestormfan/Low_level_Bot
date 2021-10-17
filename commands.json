@@ -36,5 +36,6 @@
     "close":["close"],
     "friendlist":["friendlist"],
     "emotemimic":["emotemimic"],
-    "isowner":["isowner"]
+    "isowner":["isowner"],
+    "randomrecruit":["randomrecruit"]
 }

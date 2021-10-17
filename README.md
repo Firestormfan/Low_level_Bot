@@ -1,6 +1,7 @@
-# よくわからんBOT
-よくわからないFortniteのロビーボットです  
+# Low Level Bot
+低レベルなFortniteのロビーボットです  
 今作成中なので使うのは自己責任でお願いします
+ちゃんとしたやつ使いたいならgomashio1596さんのFortnite-Lobbybot-V2とか使ってください
 
 # HOW TO USE
 1.install.batを起動します  
@@ -8,15 +9,31 @@
 3.enjoy
 
 # config
-- prefix コマンドの前に入れる文字列を指定できます
-- outfit 起動時のスキンを設定できます CIDで指定してください
-- emote 起動時のエモートを設定できます EIDで指定してください
-- backpack 起動時のバックパックを設定できます BIDで指定してください
-- owner オーナーを設定できます ユーザー名で指定してください
-- status ステータスを設定できます
-- blacklist パーティーに参加できない人を選択できます
-- privacy パーティーのプライバシー(後述)を選択できます
-- joinrequest 参加リクエストを許可するかを選択できます True か False で選択してください
+## normal
+| 設定名 | 内容 |
+:---|:---
+| prefix | コマンドの前に必要な文字列を指定します |
+| outfit | 起動時のスキンを指定します(CID指定) |
+| emote | 起動時のエモートを指定します(EID指定) |
+| backpack | 起動時のバックパックを指定します(BID指定) |
+| pickaxe | 起動時のつるはしを指定します(pickaxe_id指定) |
+| banner | 起動時のバナーを指定します(banner_id指定) |
+| color | 起動時のバナーの色を指定します |
+| level | Botのレベルを指定します |
+| owner | Botのオーナーを指定します(複数人指定可) |
+| status | 起動時のステータスを指定します |
+| blacklist | Botのブラックリストプレイヤーを指定します |
+| platform | Botのプラットフォームを指定します(後述) |
+| join_message | 参加時のメッセージを指定します |
+| join_request | 参加リクエストを許可するかどうか |
+| DEBUG | デバッグモードをオンにするかどうか |
+## party_settings
+| 設定名 | 内容 |
+:---|:---
+| privacy | Botのプライバシーを指定します(後述) |
+| max_size | パーティーの最大サイズを指定します(1~16) |
+| chat_enabled | チャットを有効化するかどうか |
+| team_change | スクワッドフォーメーションを許可するかどうか |
 
 # Commands
 | コマンド名 | 内容 |
@@ -49,6 +66,7 @@
 | close | パーティーをプライベートにします。 | 
 | friendlist | フレンドリストを表示します。 | 
 | togglepriv | プライバシーを切り替えます。 | 
+| randomrecruit | スキンをランダムに選択された初期スキンに変更します。 |
 
 # 使用可能なプライバシー
 | プライバシー | 効果 |
@@ -59,17 +77,34 @@
 | private_allow_friends_of_friends | フレンドのフレンドを許可(プライベート) |
 | friends | フレンドのみ |
 
+# 使用可能なプラットフォーム
+| 名称 | 実際のプラットフォーム |
+:---|:--- 
+| WIN | Windows |
+| MAC | MAC |
+| PS4 | PS4 |
+| PS5 | PS5 |
+| XBO | XBox One |
+| XBX | XBox Series X |
+| SWT | Switch |
+| IOS | IOS |
+| AND | Android |
+
 # getkdに使用できるプラットフォーム
 - pad
 - keyboard
 - touch
 
 # アップデート内容
-- 中身を大幅に変更
-- コマンドの追加
+- 一部バグを修正
+- エラーを赤で表示するように
+- 認証に失敗した際に再認証できるように
+- プラットフォームの選択
+- 新コマンド "randomrecruit" を追加
 
 # 今後の予定
-- プラットフォームの選択
+- ない
 
 # よくわからない / バグがある
 - [Twitter](https://twitter.com/brightnoahb) にDM送信してください
+- [Discord](https://discord.gg/qkkARgd596)

@@ -5,27 +5,28 @@
 それともコードを見に来た？
 ぜひ見て行ってくれ。
 でも、無断でコードを盗むのだけはやめてほしい。
-昔僕はそっくりそのままコードを盗まれたんだ。
+昔俺はそっくりそのままコードを盗まれたんだ。
 はあ？ってなったね
-コードがほしいときは僕に言ってくれれば渡す。
+コードがほしいときは俺に言ってくれれば渡すから。
 ほしいときは https://twitter.com/brightnoahb にDMを送ってくれ。
 とりあえず、無断で使用するのはやめてくれ。
 よろしく。
 """
 
 import fortnitepy
-import aiohttp
 import platform
+from fortnitepy import ClientPartyMember as clientparty
 import requests
-import time
 import traceback
 import asyncio
 import threading
+import random
 import traceback
 import crayons
 from requests.exceptions import Timeout
 import datetime
 import time
+from functools import partial
 from fortnitepy.ext import commands
 import ujson as json
 
@@ -34,50 +35,39 @@ requests.models.complexjson = json
 class SuicideException(Exception):
     pass
 
+def authorization():
+    with open("device_auths.json","w",encoding="utf-8") as f:
+        code = input("https://www.epicgames.com/id/api/redirect?clientId=3446cd72694c4a4485d81b77adbb2141&responseType=code にアクセスし、ページ内の文字列をすべてコピーし、貼り付けてください。 ")
+        authorization = requests.post("https://account-public-service-prod.ol.epicgames.com/account/api/oauth/token",headers={"Content_Type":"application/x-www-form-urlencoded","Authorization":f"basic MzQ0NmNkNzI2OTRjNGE0NDg1ZDgxYjc3YWRiYjIxNDE6OTIwOWQ0YTVlMjVhNDU3ZmI5YjA3NDg5ZDMxM2I0MWE="},data={"grant_type":"authorization_code","code":json.loads(code)['authorizationCode']}).json()
+        create_device_auth = requests.post(f"https://account-public-service-prod.ol.epicgames.com/account/api/public/account/{authorization['account_id']}/deviceAuth",headers={"Authorization":f"Bearer {authorization['access_token']}"}).json()
+        device_auth = {'device_id':f'{create_device_auth["deviceId"]}','account_id':f'{create_device_auth["accountId"]}','secret':f'{create_device_auth["secret"]}'}
+        json.dump(device_auth,f,indent=4)
+
 class Bot():
     def __init__(self):
         global clients
         clients = []
+        ######################必要jsonを読み込み#########################
         self.lang = json.load(open("lang\\ja.json","r+",encoding="UTF-8"))
         self.command = json.load(open("commands.json","r",encoding="utf-8"))
-        with open("device_auths.json","r+",encoding="utf-8") as device:
-            self.device = json.load(device)
-            if self.device == {}:
-                def authorization():
-                    authorization_code = input("https://www.epicgames.com/id/api/redirect?clientId=3446cd72694c4a4485d81b77adbb2141&responseType=code\nにアクセスし、fnauth?code=の後をコピーしてください\n注意:このコードを他人に教えないでください。あなたのBotが乗っ取られる可能性があります。")
-                    headers = {"Content-Type":"application/x-www-form-urlencoded","Authorization":"basic MzQ0NmNkNzI2OTRjNGE0NDg1ZDgxYjc3YWRiYjIxNDE6OTIwOWQ0YTVlMjVhNDU3ZmI5YjA3NDg5ZDMxM2I0MWE="}
-                    grant_type = {"grant_type":"authorization_code","code":f"{authorization_code}"}
-                    send_request = requests.post("https://account-public-service-prod.ol.epicgames.com/account/api/oauth/token",headers=headers,data=grant_type).json()
-                    print(send_request)
-                    url = f"https://account-public-service-prod03.ol.epicgames.com/account/api/public/account/{send_request['account_id']}/deviceAuth"
-                    headers={"Authorization":f"bearer {send_request['access_token']}","Content-Type":"application/json"}
-                    create_device_auth = requests.post(url,headers=headers).json()
-                    print(create_device_auth)
-                    device_auth = {'device_id':f'{create_device_auth["deviceId"]}','account_id':f'{create_device_auth["accountId"]}','secret':f'{create_device_auth["secret"]}'}
-                    json.dump(device_auth,self.device,indent=4)
-                    time.sleep(1)
-                authorization()
-        
         self.config = json.load(open("config.json","r",encoding="utf-8"))
-        self.blacklist = json.load(open("config.json","r",encoding="utf-8"))["blacklist"]
+        self.blacklist = self.config["normal"]["blacklist"]
+        self.debug = self.config["DEV"]["debug"]
+        try:
+            self.device = json.load(open("device_auths.json","r+",encoding="UTF-8"))
+            self.device["device_id"]
+            self.device["account_id"]
+            self.device["secret"]
+        except Exception as e:
+            print(crayons.red(f"エラーコード:{e}\n認証ファイルが破損または欠落しています。"))
+            authorization()
+        self.device = json.load(open("device_auths.json","r+",encoding="UTF-8"))
         ################################################################
-        self.bot = commands.Bot(
-            command_prefix=self.config['prefix'],
-            auth=fortnitepy.DeviceAuth(f"{self.device['device_id']}",f"{self.device['account_id']}",f"{self.device['secret']}"),
-            case_insensitive=True
-        )
-
-        clients.append(self.bot)
-
-        ################################################################
-        self.bot.platform = fortnitepy.Platform.IOS
-        
         self.public = fortnitepy.PartyPrivacy.PUBLIC
         self.private = fortnitepy.PartyPrivacy.PRIVATE
         self.friends_allow_friends_of_friends = fortnitepy.PartyPrivacy.FRIENDS_ALLOW_FRIENDS_OF_FRIENDS
         self.private_allow_friends_of_friends = fortnitepy.PartyPrivacy.PRIVATE_ALLOW_FRIENDS_OF_FRIENDS
         self.friends =  fortnitepy.PartyPrivacy.FRIENDS
-        self.emotemimic = None
         self.privacy = {
             "public":self.public,
             "private":self.private,
@@ -86,11 +76,47 @@ class Bot():
             "friend":self.friends
         }
 
-        if not self.config["privacy"] in self.privacy:
-            print(self.lang["non_existing_privacy"].format(self.config['privacy']))
-            self.boot_privacy = self.private
+        plt = fortnitepy.Platform
+        self.platform = {
+            "WIN":plt.WINDOWS,
+            "MAC":plt.MAC,
+            "PS4":plt.PLAYSTATION_4,
+            "PS5":plt.PLAYSTATION_5,
+            "XBO":plt.XBOX_ONE,
+            "XBX":plt.XBOX_X,
+            "SWT":plt.SWITCH,
+            "IOS":plt.IOS,  
+            "AND":plt.ANDROID
+        }
+        p_config = fortnitepy.DefaultPartyConfig(
+            privacy=self.privacy_converter(self.config["party_settings"]["privacy"]),
+            max_size=self.config["party_settings"]["max_size"],
+            chat_enabled=self.config["party_settings"]["chat_enabled"],
+        )
+        pm_config = fortnitepy.DefaultPartyMemberConfig(
+                meta=[
+                    partial(clientparty.set_battlepass_info, has_purchased=True,level=self.config["normal"]["level"]),
+                    partial(clientparty.set_banner, icon=self.config["normal"]["banner"] ,color=self.config["normal"]["color"] ,season_level=self.config["normal"]["level"]),
+                    partial(clientparty.set_outfit, asset=self.config["normal"]["outfit"]),
+                    partial(clientparty.set_backpack, asset=self.config["normal"]["backpack"]),
+                    partial(clientparty.set_pickaxe, asset=self.config["normal"]["pickaxe"])
+                ]
+        )
+        self.bot = commands.Bot(
+            command_prefix=self.config["normal"]['prefix'],
+            auth=fortnitepy.DeviceAuth(f"{self.device['device_id']}",f"{self.device['account_id']}",f"{self.device['secret']}"),
+            case_insensitive=True,
+            default_party_config=p_config,
+            default_party_member_config=pm_config
+        )
+        clients.append(self.bot)
+        ################################################################
+        self.emotemimic = None
+        
+        if not self.config["normal"]["platform"] in self.privacy:
+            self.bot.platform = self.platform["WIN"]
         else:
-            self.boot_privacy = self.privacy[self.config["privacy"]]
+            self.bot.platform = self.platform[self.config["normal"]["platform"]]
 
         def language(url,name):
             data = requests.get(url,timeout=(11.0)).json()
@@ -98,7 +124,7 @@ class Bot():
                 json.dump(data,f,ensure_ascii=False,indent=4)
         try:
             ja = threading.Thread(target=language,args=("https://fortnite-api.com/v2/cosmetics/br?language=ja","ja"))
-            en = threading.Thread(target=language,args=("https://fortnite-api.com/v2/cosmetics/br?language=en","ja"))
+            en = threading.Thread(target=language,args=("https://fortnite-api.com/v2/cosmetics/br?language=en","en"))
             ja.start()
             en.start()
         except Exception:
@@ -106,16 +132,50 @@ class Bot():
             print(self.lang["api_downed"])
         print(f"{crayons.green('Python ' + platform.python_version())}")
         print(f"{crayons.green('fortnitepy ' + fortnitepy.__version__)}")
-
         print(self.lang["booting"])
-        self.emote = self.config["emote"]
-        #起動時の設定
+        self.emote = self.config["normal"]["emote"]
+
+        self.recruits = [
+            "CID_001_Athena_Commando_F_Default",
+            "CID_002_Athena_Commando_F_Default",
+            "CID_003_Athena_Commando_F_Default",
+            "CID_004_Athena_Commando_F_Default",
+            "CID_005_Athena_Commando_M_Default",
+            "CID_006_Athena_Commando_M_Default",
+            "CID_007_Athena_Commando_M_Default",
+            "CID_008_Athena_Commando_M_Default",
+            "CID_556_Athena_Commando_F_RebirthDefaultA",
+            "CID_557_Athena_Commando_F_RebirthDefaultB",
+            "CID_558_Athena_Commando_F_RebirthDefaultC",
+            "CID_559_Athena_Commando_F_RebirthDefaultD",
+            "CID_560_Athena_Commando_M_RebirthDefaultA",
+            "CID_561_Athena_Commando_M_RebirthDefaultB",
+            "CID_562_Athena_Commando_M_RebirthDefaultC",
+            "CID_563_Athena_Commando_M_RebirthDefaultD",
+            "CID_873_Athena_Commando_M_RebirthDefaultE",
+            "CID_874_Athena_Commando_M_RebirthDefaultF",
+            "CID_875_Athena_Commando_M_RebirthDefaultG",
+            "CID_876_Athena_Commando_M_RebirthDefaultH",
+            "CID_877_Athena_Commando_M_RebirthDefaultI",
+            "CID_878_Athena_Commando_F_RebirthDefault_E",
+            "CID_879_Athena_Commando_F_RebirthDefault_F",
+            "CID_880_Athena_Commando_F_RebirthDefault_G",
+            "CID_881_Athena_Commando_F_RebirthDefault_H",
+            "CID_882_Athena_Commando_F_RebirthDefault_I"
+        ]
+
+    def privacy_converter(self,raw_privacy):
+        if raw_privacy in self.privacy:
+            return self.privacy[raw_privacy]
+        else:
+            return self.private
+    
     def main(self):
         bot = self.bot
         #オーナー判定
         def is_owner():
             def predicate(ctx):
-                return ctx.author.display_name in self.config["owner"]
+                return ctx.author.display_name in self.config["normal"]["owner"]
             return commands.check(predicate)
 
         def time():
@@ -124,16 +184,14 @@ class Bot():
         @bot.event
         async def event_ready():
             print(time() + self.lang["boot"].format(bot.user.display_name))
-            while not [pending for pending in bot.incoming_pending_friends[:]] == []:
-                fetch_user = await bot.fetch_user(str(bot.incoming_pending_friends[0]))
-                await fetch_user.add()
-                await asyncio.sleep(0.1)
-            print(bot.user.email)
-            await bot.set_presence(self.config["status"])
-            await bot.party.set_privacy(self.boot_privacy)
-            await bot.party.me.set_outfit(self.config["outfit"])
-            await bot.party.me.set_backpack(self.config["backpack"])
-            await bot.party.me.set_pickaxe(self.config["pickaxe"])
+            if self.debug:
+                print(f"EMail: {bot.user.email}")
+            while not bot.incoming_pending_friends == []:
+                await bot.incoming_pending_friends[0].accept()
+            bot.status = self.config["normal"]["status"]
+            await bot.party.me.set_outfit(self.config["normal"]["outfit"])
+            await bot.party.me.set_backpack(self.config["normal"]["backpack"])
+            await bot.party.me.set_pickaxe(self.config["normal"]["pickaxe"])
 
         #メッセージ系を司る
         @bot.event
@@ -152,11 +210,10 @@ class Bot():
             except TypeError:
                 await bot.party.me.clear_emote()
 
-
         @bot.event  
         async def event_party_member_join(member):
             print(crayons.cyan(time()+self.lang["join_member"].format(member.display_name,member.party.member_count)))
-            await bot.party.send(self.config["joinmessage"])
+            await bot.party.send(self.config["normal"]["join_message"])
             await bot.party.me.clear_emote()
             await bot.party.me.set_emote(self.emote)
         @bot.event
@@ -211,14 +268,26 @@ class Bot():
         #参加リクエストの処理
         @bot.event
         async def event_party_join_request(request):
-            if self.config["joinrequest"] and not request.friend.display_name in self.blacklist:
+            if self.config["normal"]["join_request"] and not request.friend.display_name in self.blacklist:
                 await request.accept()
                 print(time()+self.lang["join_request_accepted"].format(request.friend.display_name))
             else:
                 await request.friend.send(self.lang["join_request_denied"])
-        #@bot.event
-        #async def event_command_error(ctx,error):
-        #    print(traceback.format_exc())
+
+        @bot.event
+        async def event_command_error(ctx,error):
+            if self.debug:
+                print(str(type(error)))
+            if str(type(error)) == "<class 'fortnitepy.ext.commands.errors.CheckFailure'>":
+                await ctx.send(self.lang["not_owner"])
+            elif str(type(error)) == "<class 'fortnitepy.ext.commands.errors.CommandNotFound'>":
+                #what the fuck is this
+                return None or None or None or None or None or None or None or None or None or None or None or None or None or None or None or None or None or None or None or None or None or None or None or None or None or None or None or None or None or None or None
+            else:
+                a = ""
+                for i in traceback.format_exception(error.__class__, error, error.__traceback__,chain=False):
+                    a = a+i
+                print(crayons.red(a[:-1]))
 
         #commands
         @bot.command(aliases=self.command["cid"])
@@ -249,8 +318,11 @@ class Bot():
         @bot.command(aliases=self.command["exec"])
         @is_owner()
         async def aexec(ctx,*,code):
-            exec(f'async def __ex():\n    {code}')
-            return await locals()['__ex']()
+            exec(
+            f'async def asyncexec(): ' +
+            ''.join(f'\n {l}' for l in code.split('\n'))
+            ,{"ctx":ctx,"bot":bot})
+            return await locals()['asyncexec']()
         
         @bot.command(aliases=self.command["fetch"])
         async def fetch_(ctx,arg):
@@ -527,17 +599,23 @@ class Bot():
 
         @bot.command(aliases=self.command["isowner"])
         async def isowner_(ctx):
-            if ctx.author.display_name in self.config["owner"]:
+            if ctx.author.display_name in self.config["normal"]["owner"]:
                 await ctx.send("you are my owner")
             else:
                 await ctx.send("you aren't my owner")
 
-        fortnitepy.run_multiple(
-        clients
-        )
+        @bot.command(aliases=self.command["randomrecruit"])
+        async def randomrecruit_(ctx):
+            for i in range(20):
+                await bot.party.me.set_outfit(random.choice(self.recruits))
+                await asyncio.sleep(0.01)
+        
+        try:
+            bot.run()
+        except fortnitepy.errors.AuthException as e:
+            print(crayons.red(f"エラーコード:{e}\n認証に失敗しました。"))
+            authorization()
+            bot.run()
 
 if __name__ == "__main__":
-    try:
-        Bot().main()
-    except Exception:
-        print(crayons.red(traceback.format_exc()))
+    Bot().main()

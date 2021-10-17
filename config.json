@@ -1,17 +1,33 @@
 {
-    "prefix":"!",
-    "outfit":"CID_VIP_Athena_Commando_M_GalileoGondola_SG",
-    "emote":"",
-    "backpack":"",
-    "pickaxe":"",
-    "owner":["Your name"],
-    "status":"ステータス",
-    "blacklist":[
-        "aiueoblaster",
-        "kakikukekocannon",
-        "sasisusesorifle"
-    ],
-    "joinmessage":"参加メッセージ",
-    "privacy":"private",
-    "joinrequest":true
+    "normal":{
+        "prefix":"!",
+        "outfit":"CID_VIP_Athena_Commando_M_GalileoGondola_SG",
+        "emote":"",
+        "backpack":"",
+        "pickaxe":"",
+        "banner":"",
+        "color":"",
+        "level":100,
+        "owner":["your name"],
+        "status":"ステータス",
+        "blacklist":[
+            "aiueoblaster",
+            "kakikukekocannon",
+            "sasisusesorifle",
+            "tatitutetoknife"
+        ],
+        "platform":"WIN",
+        "join_message":"参加メッセージ",
+        "join_request":true,
+        "DEBUG":false
+    },
+    "party_settings":{
+        "privacy":"public",
+        "max_size":16,
+        "chat_enabled":false,
+        "team_change":true
+    },
+    "DEV":{
+        "debug":false
+    }
 }
